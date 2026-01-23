@@ -1,0 +1,44 @@
+{
+  "name": "@lytical/app",
+  "version": "1.0.0",
+  "description": "todo: place description here",
+  "main": "index.js",
+  "private": false,
+  "scripts": {
+    "build": "tsc --build",
+    "publish": "npm run clean&&npm run build&&gulp post_build&&cd ./dist&&npm publish",
+    "clean": "rimraf ./dist",
+    "rebuild": "npm run clean&&npm install&&npm run build",
+    "test": "npm run clean&&npm run build&&mocha --recursive ./dist/**/*.test.js"
+  },
+  "keywords": [
+    "todo: place keywords here...",
+    "lytical",
+    "node",
+    "typescript"
+  ],
+  "author": {
+    "email": "barry.hayles@lytical.com",
+    "name": "Barry Hayles",
+    "url": "https://www.lytical.com"
+  },
+  "repository": {
+    "type": "github",
+    "url": "git+https://github.com/lytical/app.git"
+  },
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.0.9",
+    "chai": "^6.2.2",
+    "gulp": "^5.0.1",
+    "gulp-clean": "^0.4.0",
+    "gulp-uglify-es": "^3.0.0",
+    "mocha": "^11.7.5",
+    "pump": "^3.0.3",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3"
+  }
+}

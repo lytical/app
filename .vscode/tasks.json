@@ -1,0 +1,40 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"label": "build",
+			"detail": "build the project"
+		},
+		{
+			"type": "npm",
+			"script": "rebuild",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "rebuild",
+			"detail": "clean and build the project"
+		},
+		{
+			"type": "npm",
+			"script": "publish",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "publish",
+			"detail": "clean, build, and publish the project"
+		},
+		{
+			"type": "npm",
+			"script": "test",
+			"group": "test",
+			"problemMatcher": [],
+			"label": "test",
+			"detail": "clean, build, and run tests"
+		}
+	]
+}
