@@ -10,7 +10,13 @@ a typescript api server library built for your express project, with dependency 
 
 ## Getting Started
 
-after installing `@lytical/app` to your express project, configure your `tsconfig.json` file to enable decorators.
+install packages:
+
+```bash
+npm install @lytical/app @lytical/ioc express
+```
+
+after installing, configure your `tsconfig.json` file to enable decorators.
 
 ```json
 // tsconfig.json
@@ -22,7 +28,7 @@ after installing `@lytical/app` to your express project, configure your `tsconfi
 }
 ```
 
-if this is a new project, we recommended installing `express@5.2..`, and the following project structure:
+if this is a new project, we recommended the following project structure:
 
 ```
 project
@@ -66,7 +72,7 @@ for the above project structure:
 }
 ```
 
-a simple project template can be found in github (https://....)
+a simple project template / example can be found in github (https://github.com/lytical/ts-app-example)
 
 ## Usage
 

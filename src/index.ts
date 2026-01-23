@@ -116,7 +116,7 @@ export class app extends EventEmitter {
       next();
     });
 
-    console.log('[@lytical/ts-express] creating http server...');
+    console.log('[@lytical/app] creating http server...');
     this.emit(app_evt.create_server, svr_cfg);
     if (svr_cfg.wait_for.length) {
       await Promise.all(svr_cfg.wait_for);
@@ -150,7 +150,7 @@ export class app extends EventEmitter {
       () => {
         this.emit(app_evt.server_listening);
         console.log(
-          `[@lytical/ts-express] server started on port ${listening_cfg.port}; hostname ${listening_cfg.hostname}`,
+          `[@lytical/app] server started on port ${listening_cfg.port}; hostname ${listening_cfg.hostname}`,
         );
       },
     );
@@ -160,14 +160,14 @@ export class app extends EventEmitter {
 }
 
 async function _register_routes() {
+  const cwd = process.cwd();
   const { main } =
-    (await import(join(findRoot(__dirname), 'package.json'))) ?? {};
+    (await import(join(findRoot(cwd), 'package.json'))) ?? {};
   if (main) {
     const modules = await glob(main);
-    const cwd = process.cwd();
     for await (const module of modules) {
       console.log(
-        `[@lytical/ts-express] registering routes in module (${module})...`,
+        `[@lytical/app] registering routes in module (${module})...`,
       );
       await import(join(cwd, module));
     }
@@ -251,7 +251,7 @@ export function app_route({ route, arg }: app_route_info_t) {
           }
         }
         console.debug(
-          `[@lytical/ts-express] registered (${http_method}:${base_route}${route}) route handler (${cstr.name}.${method_nm}) with dependencies (${dep_nm})`,
+          `[@lytical/app] registered (${http_method}:${base_route}${route}) route handler (${cstr.name}.${method_nm}) with dependencies (${dep_nm})`,
         );
         router.use(method_router);
         continue;
@@ -279,7 +279,7 @@ export function app_route({ route, arg }: app_route_info_t) {
           );
         }
         console.debug(
-          `[@lytical/ts-express] registered (${method}:${base_route}${route}) route handler (${cstr.name}.${method_nm})`,
+          `[@lytical/app] registered (${method}:${base_route}${route}) route handler (${cstr.name}.${method_nm})`,
         );
         continue;
       }
@@ -288,7 +288,7 @@ export function app_route({ route, arg }: app_route_info_t) {
         ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
       });
       console.debug(
-        `[@lytical/ts-express] registered (ALL-METHODS:${base_route}${route}) route handler (${cstr.name}.${method_nm})`,
+        `[@lytical/app] registered (ALL-METHODS:${base_route}${route}) route handler (${cstr.name}.${method_nm})`,
       );
     }
     _root_route.use(route, router);
