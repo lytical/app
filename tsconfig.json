@@ -5,9 +5,9 @@
     "outDir": "./dist",
 
     // Environment Settings
-    "lib": ["es6", "dom"],
-    "module": "esnext",
+    "module": "commonjs",
     "target": "es6",
+    "esModuleInterop": true,
 
     "sourceMap": true,
     "declaration": true,
@@ -28,7 +28,6 @@
 
     // Recommended Options
     "strict": true,
-    "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",

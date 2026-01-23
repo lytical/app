@@ -7,8 +7,10 @@
 import { expect } from 'chai';
 import { describe } from 'mocha';
 
-describe('todo: indicate the feature to test here...', () => {
-  it('todo: indicate the operation to test here...', async () => {
-    expect({}).to.exist;
+import app from './index';
+
+describe('an app', () => {
+  it('can be started', async () => {
+    expect(app).exist;
   });
 });

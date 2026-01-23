@@ -1,42 +1,233 @@
 # @lytical/app
 
-todo: place sub title here...
+a typescript api server library built for your express project, with dependency injection support and auto router registration
 
-this is a template project to publish npm library packages.
+## Features
 
-- clone the repository `git clone https://lyticalinc@dev.azure.com/lyticalinc/lytical/_git/ts-lib-template <lib-name>`
-- run the `node init` to configure
+- router handler dependency injection
+- auto `app.use()` router registration
+- use middleware, only for routes that require it
 
+## Getting Started
 
-## Getting Started 
+after installing `@lytical/app` to your express project, configure your `tsconfig.json` file to enable decorators.
 
-todo: add startup instructions here...
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+if this is a new project, we recommended installing `express@5.2..`, and the following project structure:
+
+```
+project
+|- dist
+|- src
+|  |- middleware
+|  |  |- my-middleware.ts
+|  |  |- ...
+|  |- routes
+|  |  |- my-route.ts
+|  |  |- ...
+|  |- services
+|  |  |- my-service.ts
+|  |  |- ...
+|  |- index.ts
+|- .gitignore
+|- package.json
+|- tsconfig.json
+```
+
+for the above project structure:
+
+- configure your `tsconfig.json` file.
+
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  }
+}
+```
+
+- configure your `package.json` file to indicate where your routes are located.
+
+```json
+// package.json
+{
+  "main": "./{index.js,routes/**/*.js}"
+}
+```
+
+a simple project template can be found in github (https://....)
 
 ## Usage
 
-todo: add usage here...
+create your injectable service class(es) to implement the business logic.
 
-### Where
+```typescript
+import { ioc_injectable } from '@lytical/ioc';
 
-todo: describe the parameters of usage here...
+@ioc_injectable()
+// src/services/example-svc.ts
+export class example_svc {
+  async get_message() {
+    return 'Hello from example_svc!';
+  }
 
-| argument | description |
-| --- | --- |
-| param | description of param |
-| **returns** | **indicate any return value here...** |
+  async get_data() {
+    return { message: await this.get_message() };
+  }
+}
+```
 
-## Example
+create your middleware classes
 
-todo: provide description of the example(s) here...
+```typescript
+// src/middleware/example-mw.ts
+import type { Request, Response, NextFunction } from 'express';
 
-### Source Code
+import { ioc_inject } from '@lytical/ioc';
+import { example_svc } from '../services/example-svc';
 
-todo: provide example source code here...
+/**
+ * Example middleware class
+ * Use for middleware that requires dependency injection
+ */
+export class example_middleware_class {
+  // inject your service(es) into the middleware class constructor
+  constructor(
+    @ioc_inject(example_svc) private readonly _example_svc: example_svc,
+  ) {}
+
+  // all middleware classes must implement a default() route handler
+  async default(rqs: Request, rsp: Response, nxt: NextFunction) {
+    console.debug('example middleware invoked');
+    rsp.locals.example_middleware_data = await this._example_svc.get_data();
+    // make sure to call nxt() to continue the request processing pipeline
+    nxt();
+  }
+}
+```
+
+create your route handler(s)
+
+```typescript
+// src/routes/example.ts
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express';
+
+import {
+  app_middleware_dependency,
+  app_route,
+  app_route_handler,
+} from '@lytical/app';
+
+import { ioc_inject } from '@lytical/ioc';
+import { example_svc } from '../services/example-svc';
+import { example_middleware_class } from '../middleware/example-mw';
+
+/**
+ * Example route class
+ * Use for router class(es) for auto app.use() registration for routes; dependent middleware; and dependency injection
+ */
+@app_route({ route: '/example' })
+export class example_route_class {
+  // inject your service(es) into the router class constructor
+  constructor(
+    @ioc_inject(example_svc) private readonly _example_svc: example_svc,
+  ) {}
+
+  // implement your handler methods
+  @app_route_handler({
+    route: '/', // /example/
+    http_method: ['GET'],
+  })
+  async get_handler(rqs: Request, rsp: Response, nxt: NextFunction) {
+    rsp.json({ message: await this._example_svc.get_message() }).end();
+  }
+
+  @app_route_handler({
+    http_method: ['POST'],
+    route: '/', // /example/
+    dependency: [
+      // use only the middleware needed
+      express.json(),
+      app_middleware_dependency(example_middleware_class),
+    ],
+  })
+  post_handler(rqs: Request, rsp: Response, nxt: NextFunction) {
+    rsp.json({ body: rqs.body, locals: rsp.locals }).end();
+  }
+}
+```
+
+now just import app and invoke `start()`
+
+```typescript
+// src/index.ts
+import app from '@lytical/app';
+
+app.start();
+```
+
+`app` emits a few life cycle events
+
+```typescript
+// src/index.ts
+import app, { app_evt } from './lib/app';
+
+// app events occur in the following order:
+// 1. create_server
+// 2. server_starting
+// 3. server_listening
+// 4. server_started
+
+app.once(app_evt.create_server, (cfg) => {
+  // modify (cfg) as needed, or remove this listener if not needed.
+  // for example, create a https server instead of http,
+  // and push async operations to fetch keys, to (cfg.wait_for).
+  // add middleware to (cfg.express), that applies to all routes, etc.
+  console.log(`the root route is (${cfg.root_route})`);
+});
+
+app.once(app_evt.server_starting, (cfg) => {
+  // modify (cfg) as needed, or remove this listener if not needed.
+  // add middleware to this application after auto registered routes are added.
+  // for example error handling middleware, etc.
+  // push async operations to fetch settings from a database, to (cfg.wait_for).
+  // this is the last to register dependencies in the ioc collection before the server starts.
+  console.log(`the hostname is (${cfg.hostname})`);
+});
+
+app.once(app_evt.server_listening, () => {
+  // remove this listener if not needed.
+  // use it to perform operations after the server starts listening.
+  // the ioc container is ready at this point.
+});
+
+app.once(app_evt.server_started, () => {
+  // remove this listener if not needed.
+  // use it to perform operations after the server has started.
+});
+
+app.start();
+```
 
 ## Documentation
 
-todo: add documentation here...
+todo: working on this right now...
 
-Stay tuned! I have more packages to come.` 
+Stay tuned! I have more packages to come.`
 
-*lytical(r) is a registered trademark of lytical, inc. all rights are reserved.*
+_lytical(r) is a registered trademark of lytical, inc. all rights are reserved._
