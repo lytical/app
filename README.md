@@ -2,13 +2,13 @@
 
 a typescript api server library built for your express project, with dependency injection support and auto router registration
 
-## Features
+## features
 
 - router handler dependency injection
 - auto `app.use()` router registration
 - use middleware, only for routes that require it
 
-## Getting Started
+## getting started
 
 install packages:
 
@@ -74,7 +74,7 @@ for the above project structure:
 
 a simple project template / example can be found in github (https://github.com/lytical/ts-app-example)
 
-## Usage
+## usage
 
 create your injectable service class(es) to implement the business logic.
 
@@ -230,10 +230,10 @@ app.once(app_evt.server_started, () => {
 app.start();
 ```
 
-## Documentation
+## documentation
 
 todo: working on this right now...
 
-Stay tuned! I have more packages to come.`
+stay tuned! i have more packages to come.`
 
 _lytical(r) is a registered trademark of lytical, inc. all rights are reserved._
