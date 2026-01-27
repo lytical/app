@@ -14,6 +14,7 @@ import express, {
   type RequestHandler,
   type Response,
   type NextFunction,
+  type ErrorRequestHandler,
 } from 'express';
 
 import findRoot from 'find-root';
@@ -161,14 +162,11 @@ export class app extends EventEmitter {
 
 async function _register_routes() {
   const cwd = process.cwd();
-  const { main } =
-    (await import(join(findRoot(cwd), 'package.json'))) ?? {};
+  const { main } = (await import(join(findRoot(cwd), 'package.json'))) ?? {};
   if (main) {
     const modules = await glob(main);
     for await (const module of modules) {
-      console.log(
-        `[@lytical/app] registering routes in module (${module})...`,
-      );
+      console.log(`[@lytical/app] registering routes in module (${module})...`);
       await import(join(cwd, module));
     }
   }
@@ -209,6 +207,7 @@ export function app_route({ route, arg }: app_route_info_t) {
       const {
         route,
         dependency,
+        error_handler,
         http_method,
       }: app_route_handler_info_normalized_t = metadata[method_nm];
 
@@ -223,18 +222,32 @@ export function app_route({ route, arg }: app_route_info_t) {
           }
           const { middleware, arg } = dep;
           method_router.use((rqs, rsp, nxt) => {
-            const inst = ioc_create_instance(middleware, ...(arg ?? []));
-            return inst.default(rqs, rsp, nxt);
+            try {
+              const inst = ioc_create_instance(middleware, ...(arg ?? []));
+              return inst.default(rqs, rsp, nxt);
+            } catch (ex) {
+              nxt(ex);
+            }
           });
-          dep_nm.push(middleware.name || 'anonymous-middleware');
+          dep_nm.push(middleware.name ?? 'anonymous-middleware');
         }
         for (const method of http_method) {
           if ((method_router as any)[method.toLowerCase()]) {
             (method_router as any)[method.toLowerCase()](
               route,
               (rqs: Request, rsp: Response, nxt: NextFunction) => {
-                const inst = ioc_create_instance(cstr, ...(arg ?? []));
-                ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+                try {
+                  const inst = ioc_create_instance(cstr, ...(arg ?? []));
+                  return ioc_invoke_method(
+                    inst[method_nm],
+                    inst,
+                    rqs,
+                    rsp,
+                    nxt,
+                  );
+                } catch (ex) {
+                  nxt(ex);
+                }
               },
             );
           } else {
@@ -244,14 +257,30 @@ export function app_route({ route, arg }: app_route_info_t) {
                 if (method.toUpperCase() !== rqs.method) {
                   return nxt();
                 }
-                const inst = ioc_create_instance(cstr, ...(arg ?? []));
-                ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+                try {
+                  const inst = ioc_create_instance(cstr, ...(arg ?? []));
+                  return ioc_invoke_method(
+                    inst[method_nm],
+                    inst,
+                    rqs,
+                    rsp,
+                    nxt,
+                  );
+                } catch (ex) {
+                  nxt(ex);
+                }
               },
             );
           }
         }
+        if (error_handler) {
+          method_router.use(error_handler);
+        }
         console.debug(
-          `[@lytical/app] registered (${http_method}:${base_route}${route}) route handler (${cstr.name}.${method_nm}) with dependencies (${dep_nm})`,
+          `[@lytical/app] registered (${http_method}:${base_route}${route})
+               route handler: ${cstr.name}.${method_nm}
+               dependencies: [${dep_nm}]
+               error handler: ${!error_handler ? 'default' : (error_handler.name ?? 'anonymous-error-handler')}`,
         );
         router.use(method_router);
         continue;
@@ -262,8 +291,12 @@ export function app_route({ route, arg }: app_route_info_t) {
           (router as any)[method.toLowerCase()](
             route,
             (rqs: Request, rsp: Response, nxt: NextFunction) => {
-              const inst = ioc_create_instance(cstr, ...(arg ?? []));
-              ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+              try {
+                const inst = ioc_create_instance(cstr, ...(arg ?? []));
+                return ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+              } catch (ex) {
+                nxt(ex);
+              }
             },
           );
         } else {
@@ -273,22 +306,34 @@ export function app_route({ route, arg }: app_route_info_t) {
               if (method.toUpperCase() !== rqs.method) {
                 return nxt();
               }
-              const inst = ioc_create_instance(cstr, ...(arg ?? []));
-              ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+              try {
+                const inst = ioc_create_instance(cstr, ...(arg ?? []));
+                return ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+              } catch (ex) {
+                nxt(ex);
+              }
             },
           );
         }
         console.debug(
-          `[@lytical/app] registered (${method}:${base_route}${route}) route handler (${cstr.name}.${method_nm})`,
+          `[@lytical/app] registered (${method}:${base_route}${route})
+               route handler: ${cstr.name}.${method_nm}               
+               error handler: ${!error_handler ? 'default' : (error_handler.name ?? 'anonymous-error-handler')}`,
         );
         continue;
       }
       router.use(route, (rqs: Request, rsp: Response, nxt: NextFunction) => {
-        const inst = ioc_create_instance(cstr, ...(arg ?? []));
-        ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+        try {
+          const inst = ioc_create_instance(cstr, ...(arg ?? []));
+          return ioc_invoke_method(inst[method_nm], inst, rqs, rsp, nxt);
+        } catch (ex) {
+          nxt(ex);
+        }
       });
       console.debug(
-        `[@lytical/app] registered (ALL-METHODS:${base_route}${route}) route handler (${cstr.name}.${method_nm})`,
+        `[@lytical/app] registered (ALL-METHODS:${base_route}${route})
+               route handler: ${cstr.name}.${method_nm}
+               error handler: ${!error_handler ? 'default' : (error_handler.name ?? 'anonymous-error-handler')}`,
       );
     }
     _root_route.use(route, router);
@@ -361,6 +406,8 @@ export type app_route_handler_info_t = {
   dependency?:
     | app_route_handler_dependency_t
     | app_route_handler_dependency_t[];
+  /** optional error handler for the route. the default handler will be used if not specified */
+  error_handler?: ErrorRequestHandler;
   /** http method or methods */
   http_method?: string | string[];
   /** the route path or pattern */
@@ -382,6 +429,7 @@ export interface app_route_middleware_t {
 
 type app_route_handler_info_normalized_t = {
   dependency: app_route_handler_dependency_t[];
+  error_handler?: ErrorRequestHandler;
   http_method: string[];
   route: string | RegExp;
 };

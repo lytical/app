@@ -164,13 +164,16 @@ export class example_route_class {
   }
 
   @app_route_handler({
-    http_method: ['POST'],
+    http_method: ['POST', 'PUT'],
     route: '/', // /example/
     dependency: [
       // use only the middleware needed
       express.json(),
       app_middleware_dependency(example_middleware_class),
     ],
+    // you may indicate an error handler middleware at the route level.
+    // the default error handler will be used if not indicated here.
+    error_handler: example_error_handler
   })
   post_handler(rqs: Request, rsp: Response, nxt: NextFunction) {
     rsp.json({ body: rqs.body, locals: rsp.locals }).end();
