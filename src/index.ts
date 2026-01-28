@@ -27,30 +27,49 @@ import ioc_collection from '@lytical/ioc/collection';
 /** events emitted by the app */
 export enum app_evt {
   /**
-   * use to create or modify the server before it is started
+   * set the event parameter (evt.server) property to provide the server instance of your choice.
    *
-   * for example, create a https server instead of http,
-   * and push async operations to fetch keys, to (cfg.wait_for).
-   * add middleware to (cfg.express), that applies to all routes, etc.
+   * e.g.
+   *   evt.server = createHttpsServer(evt.express, my_https_options);
+   *
+   * a standard http server instance is created by default, if no server is provided.
+   *
+   * evt.root_route can be modified to change the root route where auto registered routes are mounted.
+   * default is '/api'.
+   *
+   * push async operations (Promise) that fetch encryption keys, ... into the event parameter (evt.wait_for.push(...)).
+   *
+   * add middleware into the pipeline (evt.express.use(...)), before auto registered routes are added.
+   *
+   * this is also the last chance to register dependencies in the ioc collection, before the container is created.
    */
   create_server = 'lyt-create-server',
+
   /**
-   * use to modify the server listening configuration before it is started
+   * use to modify the server listening configuration before it is started.
    *
-   * add middleware to this (cfg.express) after auto registered routes are added.
-   * for example error handling middleware, etc.
-   * push async operations to fetch settings from a database, to (cfg.wait_for).
-   * this is the last to register dependencies in the ioc collection before the server starts.
+   * all auto registered routes have been added at this point.
+   *
+   * you may add middleware to the app pipeline (evt.express.use(...)), after the auto registered routes.
+   * for example, to add error handling middleware, ...
+   *
+   * push async operations (Promise) that may fetch data or does some kind of i/o, ... into (evt.wait_for.push(...)).
+   *
+   * the ioc container is also ready at this point.
    */
   server_starting = 'lyt-server-starting',
+
   /**
    * emitted when the server is listening
    *
    * use it to perform operations after the server starts listening.
-   * the ioc container is ready at this point.
+   * this is the last event from the app, when it's considered started.
    */
   server_listening = 'lyt-server-listening',
+
   /**
+   * @deprecated use the (server_listening) event instead
+   *
    * emitted when the server has started
    *
    * use it to perform operations after the server has started.
@@ -67,10 +86,12 @@ const _root_route = express.Router({
  * app class
  * @description
  * the main app class
+ *
+ * events are emitted in the following order:
+ *
  * @emits app_evt.create_server use to create or modify the server before it is started
  * @emits app_evt.server_starting use to modify the server listening configuration before it is started
  * @emits app_evt.server_listening emitted when the server is listening
- * @emits app_evt.server_started emitted when the server has started
  */
 export class app extends EventEmitter {
   override once(
@@ -93,12 +114,11 @@ export class app extends EventEmitter {
   /**
    * start the app
    * @description
-   * starts the express app server
+   * starts the express app server (simular to run() in other frameworks)
    * app events occur in the following order:
    *   1. create_server
    *   2. server_starting
    *   3. server_listening
-   *   4. server_started
    */
   async start() {
     // create server
@@ -116,24 +136,25 @@ export class app extends EventEmitter {
       rsp.set('X-Lyt-Version', '1.0.0');
       next();
     });
-
+    
     console.log('[@lytical/app] creating http server...');
     this.emit(app_evt.create_server, svr_cfg);
     if (svr_cfg.wait_for.length) {
       await Promise.all(svr_cfg.wait_for);
     }
-
+    
     _app.use(svr_cfg.root_route ?? '/api', _root_route);
 
-    const svr = svr_cfg.server ?? createServer(svr_cfg.express);
+    const server = svr_cfg.server ?? createServer(svr_cfg.express);
 
     await _register_routes();
+    await ioc_collection.create_container();
 
     const listening_cfg: app_listening_cfg_t = {
       express: svr_cfg.express,
       hostname: process.env['HOSTNAME'] || 'localhost',
       port: process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3000,
-      server: svr,
+      server,
       wait_for: [],
     };
 
@@ -142,9 +163,7 @@ export class app extends EventEmitter {
       await Promise.all(listening_cfg.wait_for);
     }
 
-    await ioc_collection.create_container();
-
-    svr.listen(
+    server.listen(
       listening_cfg.port,
       listening_cfg.hostname,
       listening_cfg.backlog,
@@ -155,8 +174,6 @@ export class app extends EventEmitter {
         );
       },
     );
-
-    this.emit(app_evt.server_started);
   }
 }
 

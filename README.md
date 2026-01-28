@@ -200,34 +200,45 @@ import app, { app_evt } from './lib/app';
 // 1. create_server
 // 2. server_starting
 // 3. server_listening
-// 4. server_started
 
 app.once(app_evt.create_server, (cfg) => {
-  // modify (cfg) as needed, or remove this listener if not needed.
-  // for example, create a https server instead of http,
-  // and push async operations to fetch keys, to (cfg.wait_for).
-  // add middleware to (cfg.express), that applies to all routes, etc.
+  // set the event parameter (evt.server) property to provide the server instance of your choice.
+  //
+  // e.g.
+  //   evt.server = createHttpsServer(evt.express, my_https_options);
+  //
+  // a standard http server instance is created by default, if no server is provided.
+  //
+  // evt.root_route can be modified to change the root route where auto registered routes are mounted.
+  // default is '/api'.
+  //
+  // push async operations (Promise) that fetch encryption keys, ... into the event parameter (evt.wait_for.push(...)).
+  //
+  // add middleware into the pipeline (evt.express.use(...)), before auto registered routes are added.
+  //
+  // this is also the last chance to register dependencies in the ioc collection, before the container is created.
   console.log(`the root route is (${cfg.root_route})`);
 });
 
 app.once(app_evt.server_starting, (cfg) => {
-  // modify (cfg) as needed, or remove this listener if not needed.
-  // add middleware to this application after auto registered routes are added.
-  // for example error handling middleware, etc.
-  // push async operations to fetch settings from a database, to (cfg.wait_for).
-  // this is the last to register dependencies in the ioc collection before the server starts.
+  // use to modify the server listening configuration before it is started.
+  //
+  // all auto registered routes have been added at this point.
+  //
+  // you may add middleware to the app pipeline (evt.express.use(...)), after the auto registered routes.
+  // for example, to add error handling middleware, ...
+  //
+  // push async operations (Promise) that may fetch data or does some kind of i/o, ... into (evt.wait_for.push(...)).
+  //
+  // the ioc container is also ready at this point.
   console.log(`the hostname is (${cfg.hostname})`);
 });
 
 app.once(app_evt.server_listening, () => {
-  // remove this listener if not needed.
+  // emitted when the server is listening
+  //
   // use it to perform operations after the server starts listening.
-  // the ioc container is ready at this point.
-});
-
-app.once(app_evt.server_started, () => {
-  // remove this listener if not needed.
-  // use it to perform operations after the server has started.
+  // this is the last event from the app, when it's considered started.
 });
 
 app.start();
