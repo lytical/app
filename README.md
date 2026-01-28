@@ -13,7 +13,7 @@ a typescript api server library built for your express project, with dependency 
 install packages:
 
 ```bash
-npm install @lytical/app @lytical/ioc express
+npm install @lytical/app express
 ```
 
 after installing, configure your `tsconfig.json` file to enable decorators.
@@ -72,7 +72,8 @@ for the above project structure:
 }
 ```
 
-a simple project template / example can be found in github (https://github.com/lytical/ts-app-example)
+a simple project template / example can be found in github\
+ (https://github.com/lytical/ts-app-example)
 
 ## usage
 
@@ -145,7 +146,8 @@ import { example_middleware_class } from '../middleware/example-mw';
 
 /**
  * Example route class
- * Use for router class(es) for auto app.use() registration for routes; dependent middleware; and dependency injection
+ * Use for router class(es) to auto app.use() registration for
+ * routes; dependent middleware; and dependency injection
  */
 @app_route({ route: '/example' })
 export class example_route_class {
@@ -173,7 +175,7 @@ export class example_route_class {
     ],
     // you may indicate an error handler middleware at the route level.
     // the default error handler will be used if not indicated here.
-    error_handler: example_error_handler
+    error_handler: example_error_handler,
   })
   post_handler(rqs: Request, rsp: Response, nxt: NextFunction) {
     rsp.json({ body: rqs.body, locals: rsp.locals }).end();
@@ -202,51 +204,57 @@ import app, { app_evt } from './lib/app';
 // 3. server_listening
 
 app.once(app_evt.create_server, (cfg) => {
-  // set the event parameter (evt.server) property to provide the server instance of your choice.
-  //
+  // set the event parameter (evt.server) property to
+  // provide the server instance of your choice.
+
   // e.g.
   //   evt.server = createHttpsServer(evt.express, my_https_options);
-  //
-  // a standard http server instance is created by default, if no server is provided.
-  //
-  // evt.root_route can be modified to change the root route where auto registered routes are mounted.
+
+  // a standard http server instance is created by default,
+  // if no server is provided.
+  
+  // evt.root_route can be modified to change the root route
+  // where auto registered routes are mounted.
+  
   // default is '/api'.
-  //
-  // push async operations (Promise) that fetch encryption keys, ... into the event parameter (evt.wait_for.push(...)).
-  //
-  // add middleware into the pipeline (evt.express.use(...)), before auto registered routes are added.
-  //
-  // this is also the last chance to register dependencies in the ioc collection, before the container is created.
+  
+  // push async operations (Promise) that fetch encryption keys, ...
+  // into the event parameter (evt.wait_for.push(...)).
+  
+  // add middleware into the pipeline (evt.express.use(...)),
+  // before auto registered routes are added.
+  
+  // this is also the last chance to register dependencies
+  // in the ioc collection, before the container is created.
   console.log(`the root route is (${cfg.root_route})`);
 });
 
 app.once(app_evt.server_starting, (cfg) => {
   // use to modify the server listening configuration before it is started.
-  //
+  
   // all auto registered routes have been added at this point.
-  //
-  // you may add middleware to the app pipeline (evt.express.use(...)), after the auto registered routes.
+  
+  // you may add middleware to the app pipeline (evt.express.use(...)),
+  // after the auto registered routes.
+  
   // for example, to add error handling middleware, ...
-  //
-  // push async operations (Promise) that may fetch data or does some kind of i/o, ... into (evt.wait_for.push(...)).
-  //
+  
+  // push async operations (Promise) that may fetch data or
+  // does some kind of i/o, ... into (evt.wait_for.push(...)).
+  
   // the ioc container is also ready at this point.
   console.log(`the hostname is (${cfg.hostname})`);
 });
 
 app.once(app_evt.server_listening, () => {
   // emitted when the server is listening
-  //
+  
   // use it to perform operations after the server starts listening.
   // this is the last event from the app, when it's considered started.
 });
 
 app.start();
 ```
-
-## documentation
-
-todo: working on this right now...
 
 stay tuned! i have more packages to come.`
 
