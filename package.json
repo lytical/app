@@ -1,6 +1,6 @@
 {
   "name": "@lytical/app",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "a typescript api server library built for your express project, with dependency injection support and auto router registration",
   "main": "index.js",
   "private": false,
