@@ -20,10 +20,10 @@ after installing, configure your `tsconfig.json` file to enable decorators.
 
 ```json
 // tsconfig.json
+
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "experimentalDecorators": true
   }
 }
 ```
@@ -55,6 +55,7 @@ for the above project structure:
 
 ```json
 // tsconfig.json
+
 {
   "compilerOptions": {
     "rootDir": "src",
@@ -67,12 +68,17 @@ for the above project structure:
 
 ```json
 // package.json
+
 {
   "main": "./{index.js,routes/**/*.js}"
 }
 ```
 
-a simple project template / example can be found in github\
+**note:** your route handlers can be place anywhere... just make sure you import them before starting the app.\
+(e.g. `import './contact/routes/index'`)
+
+## example app
+a simple project template / example can be found at github\
  (https://github.com/lytical/ts-app-example)
 
 ## usage
@@ -80,10 +86,11 @@ a simple project template / example can be found in github\
 create your injectable service class(es) to implement the business logic.
 
 ```typescript
+// src/services/example-svc.ts
+
 import { ioc_injectable } from '@lytical/ioc';
 
 @ioc_injectable()
-// src/services/example-svc.ts
 export class example_svc {
   async get_message() {
     return 'Hello from example_svc!';
@@ -99,6 +106,7 @@ create your middleware classes
 
 ```typescript
 // src/middleware/example-mw.ts
+
 import type { Request, Response, NextFunction } from 'express';
 
 import { ioc_inject } from '@lytical/ioc';
@@ -128,6 +136,7 @@ create your route handler(s)
 
 ```typescript
 // src/routes/example.ts
+
 import express, {
   type Request,
   type Response,
@@ -187,6 +196,7 @@ now just import app and invoke `start()`
 
 ```typescript
 // src/index.ts
+
 import app from '@lytical/app';
 
 app.start();
@@ -196,6 +206,7 @@ app.start();
 
 ```typescript
 // src/index.ts
+
 import app, { app_evt } from './lib/app';
 
 // app events occur in the following order:
@@ -203,7 +214,7 @@ import app, { app_evt } from './lib/app';
 // 2. server_starting
 // 3. server_listening
 
-app.once(app_evt.create_server, (cfg) => {
+app.once(app_evt.create_server, (evt) => {
   // set the event parameter (evt.server) property to
   // provide the server instance of your choice.
 
@@ -226,10 +237,10 @@ app.once(app_evt.create_server, (cfg) => {
   
   // this is also the last chance to register dependencies
   // in the ioc collection, before the container is created.
-  console.log(`the root route is (${cfg.root_route})`);
+  console.log(`the root route is (${evt.root_route})`);
 });
 
-app.once(app_evt.server_starting, (cfg) => {
+app.once(app_evt.server_starting, (evt) => {
   // use to modify the server listening configuration before it is started.
   
   // all auto registered routes have been added at this point.
@@ -243,7 +254,7 @@ app.once(app_evt.server_starting, (cfg) => {
   // does some kind of i/o, ... into (evt.wait_for.push(...)).
   
   // the ioc container is also ready at this point.
-  console.log(`the hostname is (${cfg.hostname})`);
+  console.log(`the hostname is (${evt.hostname})`);
 });
 
 app.once(app_evt.server_listening, () => {
