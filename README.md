@@ -31,16 +31,15 @@ after installing, configure your `tsconfig.json` file to enable decorators.
 if this is a new project, we recommended the following project structure:
 
 ```
-project
-|- dist
-|- src
-|  |- middleware
+project\
+|- src\
+|  |- middleware\
 |  |  |- my-middleware.ts
 |  |  |- ...
-|  |- routes
+|  |- routes\
 |  |  |- my-route.ts
 |  |  |- ...
-|  |- services
+|  |- services\
 |  |  |- my-service.ts
 |  |  |- ...
 |  |- index.ts
