@@ -1,6 +1,6 @@
 {
   "name": "@lytical/app",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "a typescript api server library built for your express project, with dependency injection support and auto router registration",
   "main": "index.js",
   "private": false,
@@ -32,6 +32,7 @@
     "url": "git+https://github.com/lytical/app.git"
   },
   "license": "ISC",
+  "type": "commonjs",
   "peerDependencies": {
     "@lytical/ioc": "^1.0.6",
     "express": "^5.2.1"
